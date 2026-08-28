@@ -4,7 +4,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 ## What this is
 
-TyKO (Typesense Kubernetes Operator) — a Kubernetes operator, built with Operator SDK / kubebuilder (go.kubebuilder.io/v4), that manages the full lifecycle of highly-available Typesense clusters via a single CRD (`TypesenseCluster`, group `ts.opentelekomcloud.com/v1alpha1`). It automates ConfigMaps, Secrets, PVCs, StatefulSets, Services, Ingress/HTTPRoute, metrics scrapers, and — most notably — Raft quorum discovery/recovery without sidecars.
+TyKO (Typesense Kubernetes Operator) — a Kubernetes operator, built with Operator SDK / kubebuilder (go.kubebuilder.io/v4), that manages the full lifecycle of highly-available Typesense clusters via two CRDs (group `ts.opentelekomcloud.com/v1alpha1`): `TypesenseCluster` and `TypesenseApiKey`. It automates ConfigMaps, Secrets, PVCs, StatefulSets, Services, Ingress/HTTPRoute, metrics scrapers, Typesense API key issuance/rotation, and — most notably — Raft quorum discovery/recovery without sidecars.
 
 ## Common commands
 
@@ -64,9 +64,20 @@ After the StatefulSet phase, the controller distinguishes two actions based on w
 
 Only once the ConfigMap has settled does the controller call `ReconcileQuorum` and fold its `ConditionQuorum` result into the CR's status/events (`QuorumNeedsAttention*` conditions surface as Warning events requiring manual intervention — lagging writes or out-of-memory/disk; anything else not-ready is retried).
 
+### Second controller: TypesenseApiKey
+
+`TypesenseApiKeyReconciler` (`internal/controller/typesenseapikey_controller.go`) drives the `TypesenseApiKey` CRD, independently of `TypesenseClusterReconciler`. It talks directly to a target `TypesenseCluster`'s Typesense `/keys` HTTP API (`typesenseapikey_client.go`, resolved via the `%s-svc.<namespace>.svc.cluster.local` Service DNS name and the cluster's admin key Secret) rather than reconciling Kubernetes sub-resources:
+
+- **Create** (`status.keyId == nil`): calls `POST /keys` with the spec's `actions`/`collections`/`description`/`expiresAt`/`value`, then writes the plaintext value to a Secret named `<key-name>-typesense-key` (`typesenseapikey_secret.go`) and records `status.keyId`/`status.valuePrefix`/`status.observedGeneration`/`status.secretRef`.
+- **Rotate** (`key.Generation != status.observedGeneration`, i.e. spec changed): Typesense keys are immutable, so this deletes the old remote key by id and creates a new one (same Secret name, so consumers don't need to change references).
+- **Drift check** (steady state, every `apiKeyReconcileRequeuePeriod` = 5 min): re-fetches the remote key; a key deleted out-of-band is recreated, a key edited out-of-band is rotated.
+- **Delete**: finalizer-guarded (`ApiKeyFinalizer`); deletes the remote Typesense key before removing the finalizer.
+
+Condition type is `Ready` (`typesenseapikey_condition_types.go`), same convention as `TypesenseCluster`, so `kubectl wait --for=condition=Ready` works uniformly on both CRDs.
+
 ### API types layout (`api/v1alpha1/`)
 
-`typesensecluster_types.go` holds the root `TypesenseClusterSpec`/`Status`; the sub-structs for each concern live in their own `typesensecluster_types_*.go` files (`_storage`, `_service`, `_ingress`, `_httproute`, `_scraper`, `_metrics`, `_healthcheck`, `_securitycontexts`), with helper methods in `typesensecluster_types_helpers.go`. `zz_generated.deepcopy.go` is generated — never hand-edit it; run `make generate` instead.
+`typesensecluster_types.go` holds the root `TypesenseClusterSpec`/`Status`; the sub-structs for each concern live in their own `typesensecluster_types_*.go` files (`_storage`, `_service`, `_ingress`, `_httproute`, `_scraper`, `_metrics`, `_healthcheck`, `_securitycontexts`), with helper methods in `typesensecluster_types_helpers.go`. `typesenseapikey_types.go` holds `TypesenseApiKeySpec`/`Status` for the second CRD. `zz_generated.deepcopy.go` is generated — never hand-edit it; run `make generate` instead.
 
 ### Config entry point
 
@@ -74,7 +85,7 @@ Only once the ConfigMap has settled does the controller call `ReconcileQuorum` a
 
 ## Making changes to the CRD
 
-Any change to `api/v1alpha1/typesensecluster_types*.go` (new field, changed `+kubebuilder:` marker, etc.) requires `make manifests generate` before building/testing — this regenerates CRD YAML under `config/crd/` and `zz_generated.deepcopy.go`. The Helm chart under `charts/typesense-operator` is produced from the kustomize output via `make helmify` and should be regenerated alongside CRD/manifest changes, not edited by hand.
+Any change to `api/v1alpha1/typesensecluster_types*.go` or `api/v1alpha1/typesenseapikey_types.go` (new field, changed `+kubebuilder:` marker, etc.) requires `make manifests generate` before building/testing — this regenerates CRD YAML under `config/crd/` and `zz_generated.deepcopy.go`. The Helm chart under `charts/typesense-operator` is produced from the kustomize output via `make helmify` and should be regenerated alongside CRD/manifest changes, not edited by hand.
 
 ## golangci-lint notes
 
