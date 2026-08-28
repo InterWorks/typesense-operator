@@ -1,6 +1,6 @@
 module github.com/akyriako/typesense-operator
 
-go 1.24.0
+go 1.25
 
 require (
 	github.com/go-logr/logr v1.4.3
@@ -14,7 +14,7 @@ require (
 	k8s.io/api v0.34.1
 	k8s.io/apimachinery v0.34.1
 	k8s.io/client-go v0.34.1
-	k8s.io/utils v0.0.0-20250820121507-0af2bda4dd1d
+	k8s.io/utils v0.0.0-20260707023825-cf1189d6abe3
 	sigs.k8s.io/controller-runtime v0.22.1
 	sigs.k8s.io/gateway-api v1.4.1
 )
