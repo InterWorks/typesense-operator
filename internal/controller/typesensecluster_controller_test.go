@@ -22,7 +22,9 @@ import (
 	. "github.com/onsi/ginkgo/v2"
 	. "github.com/onsi/gomega"
 	"k8s.io/apimachinery/pkg/api/errors"
+	"k8s.io/apimachinery/pkg/api/resource"
 	"k8s.io/apimachinery/pkg/types"
+	"k8s.io/client-go/kubernetes"
 	"sigs.k8s.io/controller-runtime/pkg/reconcile"
 
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
@@ -51,7 +53,13 @@ var _ = Describe("TypesenseCluster Controller", func() {
 						Name:      resourceName,
 						Namespace: "default",
 					},
-					// TODO(user): Specify other spec details if needed.
+					Spec: tsv1alpha1.TypesenseClusterSpec{
+						Image: "typesense/typesense:27.1",
+						Storage: &tsv1alpha1.StorageSpec{
+							Size:             resource.MustParse("100Mi"),
+							StorageClassName: "standard",
+						},
+					},
 				}
 				Expect(k8sClient.Create(ctx, resource)).To(Succeed())
 			}
@@ -68,12 +76,16 @@ var _ = Describe("TypesenseCluster Controller", func() {
 		})
 		It("should successfully reconcile the resource", func() {
 			By("Reconciling the created resource")
+			clientSet, err := kubernetes.NewForConfig(cfg)
+			Expect(err).NotTo(HaveOccurred())
+
 			controllerReconciler := &TypesenseClusterReconciler{
-				Client: k8sClient,
-				Scheme: k8sClient.Scheme(),
+				Client:          k8sClient,
+				Scheme:          k8sClient.Scheme(),
+				DiscoveryClient: clientSet.DiscoveryClient,
 			}
 
-			_, err := controllerReconciler.Reconcile(ctx, reconcile.Request{
+			_, err = controllerReconciler.Reconcile(ctx, reconcile.Request{
 				NamespacedName: typeNamespacedName,
 			})
 			Expect(err).NotTo(HaveOccurred())

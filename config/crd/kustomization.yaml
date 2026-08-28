@@ -3,6 +3,7 @@
 # It should be run by config/default
 resources:
 - bases/ts.opentelekomcloud.com_typesenseclusters.yaml
+- bases/ts.opentelekomcloud.com_typesenseapikeys.yaml
 # +kubebuilder:scaffold:crdkustomizeresource
 
 patches:

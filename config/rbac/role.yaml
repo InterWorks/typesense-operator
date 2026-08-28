@@ -124,6 +124,7 @@ rules:
 - apiGroups:
   - ts.opentelekomcloud.com
   resources:
+  - typesenseapikeys
   - typesenseclusters
   verbs:
   - create
@@ -136,12 +137,14 @@ rules:
 - apiGroups:
   - ts.opentelekomcloud.com
   resources:
+  - typesenseapikeys/finalizers
   - typesenseclusters/finalizers
   verbs:
   - update
 - apiGroups:
   - ts.opentelekomcloud.com
   resources:
+  - typesenseapikeys/status
   - typesenseclusters/status
   verbs:
   - get

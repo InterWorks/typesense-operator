@@ -1,3 +1,13 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cluster-1-server-configuration
+data:
+  # Typesense defaults this to NUM_CORES * 8, which can spawn more threads than the
+  # container/host can actually create (crashes with "Resource temporarily unavailable"
+  # on dev machines/CI runners with many cores but tight container resource limits).
+  TYPESENSE_THREAD_POOL_SIZE: "32"
+---
 apiVersion: ts.opentelekomcloud.com/v1alpha1
 kind: TypesenseCluster
 metadata:
@@ -11,3 +21,5 @@ spec:
   storage:
     size: 100Mi
     storageClassName: standard
+  additionalServerConfiguration:
+    name: cluster-1-server-configuration

@@ -1,0 +1,5 @@
+[tools]
+kind    = "0.32.0"
+kubectl = "1.36.2"
+helm    = "4.2.4"
+golangci-lint = "2.13.1"
