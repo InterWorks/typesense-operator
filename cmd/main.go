@@ -19,8 +19,10 @@ package main
 import (
 	"crypto/tls"
 	"flag"
+	"net/http"
 	"os"
 	"path/filepath"
+	"time"
 
 	"go.uber.org/zap/zapcore"
 	"k8s.io/client-go/kubernetes"
@@ -245,6 +247,16 @@ func main() {
 		InCluster:       isInCluster(),
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TypesenseCluster")
+		os.Exit(1)
+	}
+
+	if err = (&controller.TypesenseApiKeyReconciler{
+		Client:     mgr.GetClient(),
+		Scheme:     mgr.GetScheme(),
+		Recorder:   mgr.GetEventRecorderFor("typesenseapikey-controller"),
+		HttpClient: &http.Client{Timeout: 10 * time.Second},
+	}).SetupWithManager(mgr); err != nil {
+		setupLog.Error(err, "unable to create controller", "controller", "TypesenseApiKey")
 		os.Exit(1)
 	}
 	// +kubebuilder:scaffold:builder
