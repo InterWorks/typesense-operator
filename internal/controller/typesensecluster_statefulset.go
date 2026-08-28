@@ -68,7 +68,7 @@ func (r *TypesenseClusterReconciler) ReconcileStatefulSet(ctx context.Context, t
 			string(ConditionReasonQuorumDowngraded),
 			string(ConditionReasonQuorumUpgraded),
 			string(ConditionReasonQuorumNeedsAttentionMemoryOrDiskIssue),
-			//string(ConditionReasonQuorumNeedsAttentionClusterIsLagging),
+			// string(ConditionReasonQuorumNeedsAttentionClusterIsLagging),
 			string(ConditionReasonQuorumNotReady),
 			ConditionReasonStatefulSetNotReady,
 			ConditionReasonReconciliationInProgress,
@@ -79,7 +79,7 @@ func (r *TypesenseClusterReconciler) ReconcileStatefulSet(ctx context.Context, t
 
 		if condition != nil {
 			emergencyUpdateRequired := r.shouldEmergencyUpdateStatefulSet(sts, ts)
-			if _, contains := contains(skipConditions, condition.Reason); !contains || emergencyUpdateRequired {
+			if !contains(skipConditions, condition.Reason) || emergencyUpdateRequired {
 				desiredSts, err := r.buildStatefulSet(ctx, stsObjectKey, ts)
 				if err != nil {
 					r.logger.Error(err, "building statefulset failed", "sts", stsObjectKey.Name)
@@ -110,7 +110,7 @@ func (r *TypesenseClusterReconciler) ReconcileStatefulSet(ctx context.Context, t
 						r.logger.V(debugLevel).Error(err, fmt.Sprintf("unable to fetch config map: %s", configMapName))
 					}
 
-					_, _, updated, err := r.updateConfigMap(ctx, ts, cm, updatedSts.Spec.Replicas, true)
+					_, updated, err := r.updateConfigMap(ctx, ts, cm, updatedSts.Spec.Replicas, true)
 					if err != nil {
 						r.logger.V(debugLevel).Error(err, fmt.Sprintf("unable to update config map: %s", configMapName))
 					}
@@ -137,7 +137,7 @@ func (r *TypesenseClusterReconciler) ReconcileStatefulSet(ctx context.Context, t
 					if err := r.Get(ctx, configMapObjectKey, cm); err != nil {
 						r.logger.V(debugLevel).Error(err, fmt.Sprintf("unable to fetch config map: %s", configMapName))
 					}
-					_, _, updated, err := r.updateConfigMap(ctx, ts, cm, &size, true)
+					_, updated, err := r.updateConfigMap(ctx, ts, cm, &size, true)
 					if err != nil {
 						return desiredSts, true, err
 					}
@@ -195,7 +195,7 @@ func (r *TypesenseClusterReconciler) updateStatefulSet(ctx context.Context, sts 
 	patch := client.MergeFrom(sts.DeepCopy())
 	sts.Spec = desired.Spec
 
-	sts.ObjectMeta.Annotations = desired.ObjectMeta.Annotations
+	sts.Annotations = desired.Annotations
 
 	if sts.Spec.Template.Annotations == nil {
 		sts.Spec.Template.Annotations = map[string]string{}
@@ -257,19 +257,19 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 					ImagePullSecrets:  ts.Spec.ImagePullSecrets,
 					Containers: []corev1.Container{
 						{
-							Name:            "typesense",
+							Name:            typesenseValue,
 							Image:           ts.Spec.Image,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							SecurityContext: ts.Spec.GetTypesenseSecurityContext(),
 							Ports: []corev1.ContainerPort{
 								{
-									Name:          "http",
+									Name:          httpPortName,
 									ContainerPort: int32(ts.Spec.ApiPort),
 								},
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name: "TYPESENSE_API_KEY",
+									Name: envTypesenseApiKey,
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
 											Key: ClusterAdminApiKeySecretKeyName,
@@ -320,11 +320,11 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									MountPath: "/usr/share/typesense",
-									Name:      "nodeslist",
+									Name:      nodesListValue,
 								},
 								{
 									MountPath: "/usr/share/typesense/data",
-									Name:      "data",
+									Name:      dataValue,
 								},
 							},
 						},
@@ -341,7 +341,7 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name: "TYPESENSE_API_KEY",
+									Name: envTypesenseApiKey,
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
 											Key: ClusterAdminApiKeySecretKeyName,
@@ -356,8 +356,8 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 									Value: strconv.Itoa(ts.Spec.GetMetricsExporterSpecs().LogLevel),
 								},
 								{
-									Name:  "TYPESENSE_PROTOCOL",
-									Value: "http",
+									Name:  envTypesenseProtocol,
+									Value: httpPortName,
 								},
 								{
 									Name:  "TYPESENSE_HOST",
@@ -379,19 +379,19 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 							Resources: ts.Spec.GetMetricsExporterResources(),
 						},
 						{
-							Name:            "healthcheck",
+							Name:            healthcheckValue,
 							Image:           ts.Spec.GetHealthCheckSidecarSpecs().Image,
 							ImagePullPolicy: corev1.PullIfNotPresent,
 							SecurityContext: ts.Spec.GetHealthcheckSecurityContext(),
 							Ports: []corev1.ContainerPort{
 								{
-									Name:          "healthcheck",
+									Name:          healthcheckValue,
 									ContainerPort: 8808,
 								},
 							},
 							Env: []corev1.EnvVar{
 								{
-									Name: "TYPESENSE_API_KEY",
+									Name: envTypesenseApiKey,
 									ValueFrom: &corev1.EnvVarSource{
 										SecretKeyRef: &corev1.SecretKeySelector{
 											Key: ClusterAdminApiKeySecretKeyName,
@@ -406,8 +406,8 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 									Value: strconv.Itoa(ts.Spec.GetHealthCheckSidecarSpecs().LogLevel),
 								},
 								{
-									Name:  "TYPESENSE_PROTOCOL",
-									Value: "http",
+									Name:  envTypesenseProtocol,
+									Value: httpPortName,
 								},
 								{
 									Name:  "TYPESENSE_API_PORT",
@@ -434,7 +434,7 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 							VolumeMounts: []corev1.VolumeMount{
 								{
 									MountPath: "/usr/share/typesense",
-									Name:      "nodeslist",
+									Name:      nodesListValue,
 									ReadOnly:  true,
 								},
 							},
@@ -446,7 +446,7 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 					TopologySpreadConstraints: ts.Spec.GetTopologySpreadConstraints(getLabels(ts)),
 					Volumes: []corev1.Volume{
 						{
-							Name: "nodeslist",
+							Name: nodesListValue,
 							VolumeSource: corev1.VolumeSource{
 								ConfigMap: &corev1.ConfigMapVolumeSource{
 									LocalObjectReference: corev1.LocalObjectReference{
@@ -456,10 +456,10 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 							},
 						},
 						{
-							Name: "data",
+							Name: dataValue,
 							VolumeSource: corev1.VolumeSource{
 								PersistentVolumeClaim: &corev1.PersistentVolumeClaimVolumeSource{
-									ClaimName: "data",
+									ClaimName: dataValue,
 								},
 							},
 						},
@@ -469,7 +469,7 @@ func (r *TypesenseClusterReconciler) buildStatefulSet(ctx context.Context, key c
 			VolumeClaimTemplates: []corev1.PersistentVolumeClaim{
 				{
 					ObjectMeta: metav1.ObjectMeta{
-						Name:        "data",
+						Name:        dataValue,
 						Labels:      getLabels(ts),
 						Annotations: ts.Spec.GetStorage().Annotations,
 					},
@@ -517,7 +517,7 @@ func (r *TypesenseClusterReconciler) ScaleStatefulSet(ctx context.Context, stsOb
 
 	desired := sts.DeepCopy()
 	desired.Spec.Replicas = &desiredReplicas
-	if err := r.Client.Update(ctx, desired); err != nil {
+	if err := r.Update(ctx, desired); err != nil {
 		r.logger.Error(err, "updating stateful replicas failed", "name", desired.Name)
 		return err
 	}

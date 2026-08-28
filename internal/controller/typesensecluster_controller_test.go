@@ -54,10 +54,10 @@ var _ = Describe("TypesenseCluster Controller", func() {
 						Namespace: "default",
 					},
 					Spec: tsv1alpha1.TypesenseClusterSpec{
-						Image: "typesense/typesense:27.1",
+						Image: testTypesenseImage,
 						Storage: &tsv1alpha1.StorageSpec{
 							Size:             resource.MustParse("100Mi"),
-							StorageClassName: "standard",
+							StorageClassName: testStorageClassName,
 						},
 					},
 				}

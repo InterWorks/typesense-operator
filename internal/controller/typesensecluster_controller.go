@@ -114,6 +114,66 @@ const (
 //
 // For more details, check Reconcile and its Result here:
 // - https://pkg.go.dev/sigs.k8s.io/controller-runtime@v0.18.4/pkg/reconcile
+// failStep records a not-ready condition for a failed reconciliation step, folding in any error
+// encountered while recording the condition itself, so callers can return a single error value.
+func (r *TypesenseClusterReconciler) failStep(ctx context.Context, ts *tsv1alpha1.TypesenseCluster, reason string, err error) error {
+	cerr := r.setConditionNotReady(ctx, ts, reason, err)
+	if cerr != nil {
+		err = errors.Wrap(err, cerr.Error())
+	}
+	return err
+}
+
+// reportQuorumCondition records the TypesenseCluster's condition based on the quorum's reported
+// state, raising a warning event on anything but ClusterStatusOK.
+func (r *TypesenseClusterReconciler) reportQuorumCondition(ctx context.Context, ts *tsv1alpha1.TypesenseCluster, condition ConditionQuorum, quorumErr error) error {
+	if strings.Contains(string(condition), "QuorumNeedsAttention") {
+		eram := "cluster needs manual administrative attention: "
+
+		if condition == ConditionReasonQuorumNeedsAttentionClusterIsLagging {
+			eram += "queued_writes > healthyWriteLagThreshold"
+		}
+
+		if condition == ConditionReasonQuorumNeedsAttentionMemoryOrDiskIssue {
+			eram += "out of memory or disk"
+		}
+
+		erram := errors.New(eram)
+		if cerr := r.setConditionNotReady(ctx, ts, string(condition), erram); cerr != nil {
+			return cerr
+		}
+		r.Recorder.Eventf(ts, "Warning", string(condition), toTitle(erram.Error()))
+
+		return nil
+	}
+
+	if condition != ConditionReasonQuorumReady {
+		err := quorumErr
+		if err == nil {
+			err = errors.New("quorum is not ready")
+		}
+		if cerr := r.setConditionNotReady(ctx, ts, string(condition), err); cerr != nil {
+			return cerr
+		}
+
+		r.Recorder.Eventf(ts, "Warning", string(condition), toTitle(err.Error()))
+
+		return nil
+	}
+
+	report := ts.Status.Conditions[0].Status != metav1.ConditionTrue
+
+	if cerr := r.setConditionReady(ctx, ts, string(condition)); cerr != nil {
+		return cerr
+	}
+
+	if report {
+		r.Recorder.Eventf(ts, "Normal", string(condition), toTitle("quorum is ready"))
+	}
+
+	return nil
+}
+
 func (r *TypesenseClusterReconciler) Reconcile(ctx context.Context, req ctrl.Request) (ctrl.Result, error) {
 	r.logger = log.Log.WithValues("namespace", req.Namespace, "cluster", req.Name)
 
@@ -132,81 +192,49 @@ func (r *TypesenseClusterReconciler) Reconcile(ctx context.Context, req ctrl.Req
 	// Update strategy: Admin Secret is Immutable, will not be updated on any future change
 	secret, err := r.ReconcileSecret(ctx, ts)
 	if err != nil {
-		cerr := r.setConditionNotReady(ctx, &ts, ConditionReasonSecretNotReady, err)
-		if cerr != nil {
-			err = errors.Wrap(err, cerr.Error())
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.failStep(ctx, &ts, ConditionReasonSecretNotReady, err)
 	}
 
 	// Update strategy: Update the existing object, if changes are identified in the desired.Data["nodes"]
 	configMapUpdated, err := r.ReconcileConfigMap(ctx, ts)
 	if err != nil {
-		cerr := r.setConditionNotReady(ctx, &ts, ConditionReasonConfigMapNotReady, err)
-		if cerr != nil {
-			err = errors.Wrap(err, cerr.Error())
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.failStep(ctx, &ts, ConditionReasonConfigMapNotReady, err)
 	}
 
 	// Update strategy: Update the existing objects, if changes are identified in api and peering ports
 	err = r.ReconcileServices(ctx, ts)
 	if err != nil {
-		cerr := r.setConditionNotReady(ctx, &ts, ConditionReasonServicesNotReady, err)
-		if cerr != nil {
-			err = errors.Wrap(err, cerr.Error())
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.failStep(ctx, &ts, ConditionReasonServicesNotReady, err)
 	}
 
 	// Update strategy: Update the existing objects, if changes are identified in api and peering ports
 	err = r.ReconcileIngress(ctx, &ts)
 	if err != nil {
-		cerr := r.setConditionNotReady(ctx, &ts, ConditionReasonIngressNotReady, err)
-		if cerr != nil {
-			err = errors.Wrap(err, cerr.Error())
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.failStep(ctx, &ts, ConditionReasonIngressNotReady, err)
 	}
 
 	// Update strategy: Update the existing objects, if changes are identified
 	err = r.ReconcileHttpRoute(ctx, &ts)
 	if err != nil {
-		cerr := r.setConditionNotReady(ctx, &ts, ConditionReasonHttpRouteNotReady, err)
-		if cerr != nil {
-			err = errors.Wrap(err, cerr.Error())
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.failStep(ctx, &ts, ConditionReasonHttpRouteNotReady, err)
 	}
 
 	// Update strategy: Drop the existing objects and recreate them, if changes are identified
 	err = r.ReconcileScraper(ctx, ts)
 	if err != nil {
-		cerr := r.setConditionNotReady(ctx, &ts, ConditionReasonScrapersNotReady, err)
-		if cerr != nil {
-			err = errors.Wrap(err, cerr.Error())
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.failStep(ctx, &ts, ConditionReasonScrapersNotReady, err)
 	}
 
 	// Update strategy: Update the Deployment if image changed. Drop the existing ServiceMonitor and recreate it, if changes are identified
 	err = r.ReconcilePodMonitor(ctx, ts)
 	if err != nil {
-		cerr := r.setConditionNotReady(ctx, &ts, ConditionReasonMetricsExporterNotReady, err)
-		if cerr != nil {
-			err = errors.Wrap(err, cerr.Error())
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.failStep(ctx, &ts, ConditionReasonMetricsExporterNotReady, err)
 	}
 
 	// Update strategy: Update the whole specs when changes are identified
 	sts, _, err := r.ReconcileStatefulSet(ctx, &ts)
 	if err != nil {
-		cerr := r.setConditionNotReady(ctx, &ts, ConditionReasonStatefulSetNotReady, err)
-		if cerr != nil {
-			err = errors.Wrap(err, cerr.Error())
-		}
-		return ctrl.Result{}, err
+		return ctrl.Result{}, r.failStep(ctx, &ts, ConditionReasonStatefulSetNotReady, err)
 	}
 
 	terminationGracePeriodSeconds := *sts.Spec.Template.Spec.TerminationGracePeriodSeconds
@@ -254,47 +282,8 @@ func (r *TypesenseClusterReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		r.logger.Error(err, "reconciling quorum health failed")
 	}
 
-	if strings.Contains(string(condition), "QuorumNeedsAttention") {
-		eram := "cluster needs manual administrative attention: "
-
-		if condition == ConditionReasonQuorumNeedsAttentionClusterIsLagging {
-			eram += "queued_writes > healthyWriteLagThreshold"
-		}
-
-		if condition == ConditionReasonQuorumNeedsAttentionMemoryOrDiskIssue {
-			eram += "out of memory or disk"
-		}
-
-		erram := errors.New(eram)
-		cerr := r.setConditionNotReady(ctx, &ts, string(condition), erram)
-		if cerr != nil {
-			return ctrl.Result{}, cerr
-		}
-		r.Recorder.Eventf(&ts, "Warning", string(condition), toTitle(erram.Error()))
-
-	} else {
-		if condition != ConditionReasonQuorumReady {
-			if err == nil {
-				err = errors.New("quorum is not ready")
-			}
-			cerr := r.setConditionNotReady(ctx, &ts, string(condition), err)
-			if cerr != nil {
-				return ctrl.Result{}, cerr
-			}
-
-			r.Recorder.Eventf(&ts, "Warning", string(condition), toTitle(err.Error()))
-		} else {
-			report := ts.Status.Conditions[0].Status != metav1.ConditionTrue
-
-			cerr := r.setConditionReady(ctx, &ts, string(condition))
-			if cerr != nil {
-				return ctrl.Result{}, cerr
-			}
-
-			if report {
-				r.Recorder.Eventf(&ts, "Normal", string(condition), toTitle("quorum is ready"))
-			}
-		}
+	if cerr := r.reportQuorumCondition(ctx, &ts, condition, err); cerr != nil {
+		return ctrl.Result{}, cerr
 	}
 
 	cond = condition

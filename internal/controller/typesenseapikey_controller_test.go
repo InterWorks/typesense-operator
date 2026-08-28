@@ -40,6 +40,12 @@ import (
 	tsv1alpha1 "github.com/akyriako/typesense-operator/api/v1alpha1"
 )
 
+const (
+	testTypesenseImage        = "typesense/typesense:27.1"
+	testStorageClassName      = "standard"
+	testDocumentsSearchAction = "documents:search"
+)
+
 // fakeKeysServer is a minimal in-memory stand-in for the Typesense /keys REST API, used so the
 // TypesenseApiKeyReconciler tests can exercise real HTTP request/response handling without a
 // live Typesense cluster. It keeps created keys in memory so GET can reflect drift (or a
@@ -176,9 +182,9 @@ var _ = Describe("TypesenseApiKey Controller", func() {
 				Namespace: namespace,
 			},
 			Spec: tsv1alpha1.TypesenseClusterSpec{
-				Image: "typesense/typesense:27.1",
+				Image: testTypesenseImage,
 				Storage: &tsv1alpha1.StorageSpec{
-					StorageClassName: "standard",
+					StorageClassName: testStorageClassName,
 				},
 			},
 		}
@@ -218,7 +224,7 @@ var _ = Describe("TypesenseApiKey Controller", func() {
 			Spec: tsv1alpha1.TypesenseApiKeySpec{
 				ClusterRef:  tsv1alpha1.TypesenseClusterReference{Name: clusterName},
 				Description: "test key",
-				Actions:     []string{"documents:search"},
+				Actions:     []string{testDocumentsSearchAction},
 				Collections: []string{"*"},
 			},
 		}
@@ -260,7 +266,7 @@ var _ = Describe("TypesenseApiKey Controller", func() {
 			Spec: tsv1alpha1.TypesenseApiKeySpec{
 				ClusterRef:  tsv1alpha1.TypesenseClusterReference{Name: clusterName},
 				Description: "rotate key",
-				Actions:     []string{"documents:search"},
+				Actions:     []string{testDocumentsSearchAction},
 				Collections: []string{"*"},
 			},
 		}
@@ -307,7 +313,7 @@ var _ = Describe("TypesenseApiKey Controller", func() {
 			Spec: tsv1alpha1.TypesenseApiKeySpec{
 				ClusterRef:  tsv1alpha1.TypesenseClusterReference{Name: clusterName},
 				Description: "drift key",
-				Actions:     []string{"documents:search"},
+				Actions:     []string{testDocumentsSearchAction},
 				Collections: []string{"*"},
 			},
 		}
@@ -345,7 +351,7 @@ var _ = Describe("TypesenseApiKey Controller", func() {
 			Spec: tsv1alpha1.TypesenseApiKeySpec{
 				ClusterRef:  tsv1alpha1.TypesenseClusterReference{Name: clusterName},
 				Description: "drift key",
-				Actions:     []string{"documents:search"},
+				Actions:     []string{testDocumentsSearchAction},
 				Collections: []string{"*"},
 			},
 		}
@@ -397,9 +403,9 @@ var _ = Describe("TypesenseApiKey Controller", func() {
 				Namespace: otherNamespace.Name,
 			},
 			Spec: tsv1alpha1.TypesenseClusterSpec{
-				Image: "typesense/typesense:27.1",
+				Image: testTypesenseImage,
 				Storage: &tsv1alpha1.StorageSpec{
-					StorageClassName: "standard",
+					StorageClassName: testStorageClassName,
 				},
 			},
 		}
@@ -430,7 +436,7 @@ var _ = Describe("TypesenseApiKey Controller", func() {
 					Namespace: otherNamespace.Name,
 				},
 				Description: "cross namespace key",
-				Actions:     []string{"documents:search"},
+				Actions:     []string{testDocumentsSearchAction},
 				Collections: []string{"*"},
 			},
 		}
