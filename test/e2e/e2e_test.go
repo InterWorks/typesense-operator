@@ -229,9 +229,14 @@ var _ = Describe("controller", Ordered, func() {
 			Expect(apiKeyValue).NotTo(BeEmpty())
 
 			By("verifying the api key authenticates against the real typesense cluster")
-			searchUrl := fmt.Sprintf("http://%s:8108/collections/nonexistent-collection/documents/search?q=*&query_by=name", clusterServiceFQDN)
-			searchScript := fmt.Sprintf("echo STATUS:$(curl -s -o /dev/null -w '%%{http_code}' -H 'X-TYPESENSE-API-KEY: %s' '%s')",
-				apiKeyValue, searchUrl)
+			searchUrl := fmt.Sprintf(
+				"http://%s:8108/collections/nonexistent-collection/documents/search?q=*&query_by=name",
+				clusterServiceFQDN,
+			)
+			searchScript := fmt.Sprintf(
+				"echo STATUS:$(curl -s -o /dev/null -w '%%{http_code}' -H 'X-TYPESENSE-API-KEY: %s' '%s')",
+				apiKeyValue, searchUrl,
+			)
 			searchOutput, err := runCurlPod("tsapikey-verify-search", searchScript)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(searchOutput).To(ContainSubstring("STATUS:404"),
@@ -239,8 +244,11 @@ var _ = Describe("controller", Ordered, func() {
 
 			By("verifying the api key is scoped to documents:search only")
 			collectionsUrl := fmt.Sprintf("http://%s:8108/collections", clusterServiceFQDN)
-			scopeScript := fmt.Sprintf("echo STATUS:$(curl -s -o /dev/null -w '%%{http_code}' -X POST -H 'X-TYPESENSE-API-KEY: %s' -H 'Content-Type: application/json' -d '{\"name\":\"should-not-be-created\",\"fields\":[]}' '%s')",
-				apiKeyValue, collectionsUrl)
+			scopeScript := fmt.Sprintf(
+				"echo STATUS:$(curl -s -o /dev/null -w '%%{http_code}' -X POST -H 'X-TYPESENSE-API-KEY: %s' "+
+					"-H 'Content-Type: application/json' -d '{\"name\":\"should-not-be-created\",\"fields\":[]}' '%s')",
+				apiKeyValue, collectionsUrl,
+			)
 			scopeOutput, err := runCurlPod("tsapikey-verify-scope", scopeScript)
 			Expect(err).NotTo(HaveOccurred())
 			Expect(scopeOutput).To(ContainSubstring("STATUS:401"),
