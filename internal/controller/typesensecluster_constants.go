@@ -19,7 +19,7 @@ const (
 	ClusterHttpRoute               = "%s-%s"
 	ClusterHttpRouteReferenceGrant = "%s-%s-reference-grant"
 
-	//TODO Remove them future version 0.2.15
+	// TODO Remove them future version 0.2.15
 
 	ClusterPrometheusExporterAppLabel       = "%s-prometheus-exporter"
 	ClusterPrometheusExporterDeployment     = "%s-prometheus-exporter"

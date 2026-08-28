@@ -27,10 +27,10 @@ type HttpRouteSpec struct {
 	// +kubebuilder:validation:Enum=Exact;PathPrefix;ImplementationSpecific
 	PathType *gatewayv1.PathMatchType `json:"pathType,omitempty"`
 
-	//// +optional
-	//// +kubebuilder:default=false
-	//// +kubebuilder:validation:Type=boolean
-	//UseReverseProxy *bool `json:"useReverseProxy,omitempty"`
+	// // +optional
+	// // +kubebuilder:default=false
+	// // +kubebuilder:validation:Type=boolean
+	// UseReverseProxy *bool `json:"useReverseProxy,omitempty"`
 
 	// +optional
 	Labels map[string]string `json:"labels,omitempty"`

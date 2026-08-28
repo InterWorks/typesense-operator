@@ -63,7 +63,7 @@ func (r *TypesenseClusterReconciler) ReconcilePodMonitor(ctx context.Context, ts
 			return err
 		}
 	} else {
-		if ts.Spec.Metrics.Release != podMonitor.ObjectMeta.Labels["release"] || monitoringv1.Duration(fmt.Sprintf("%ds", ts.Spec.Metrics.IntervalInSeconds)) != podMonitor.Spec.PodMetricsEndpoints[0].Interval {
+		if ts.Spec.Metrics.Release != podMonitor.Labels["release"] || monitoringv1.Duration(fmt.Sprintf("%ds", ts.Spec.Metrics.IntervalInSeconds)) != podMonitor.Spec.PodMetricsEndpoints[0].Interval {
 			r.logger.V(debugLevel).Info("updating podmonitor", "podmonitor", podMonitorObjectKey.Name)
 
 			err := r.deleteMetricsExporterPodMonitor(ctx, podMonitor)
@@ -101,7 +101,7 @@ func (r *TypesenseClusterReconciler) createMetricsExporterPodMonitor(ctx context
 					Port:     "metrics",
 					Path:     "/metrics",
 					Interval: monitoringv1.Duration(fmt.Sprintf("%ds", ts.Spec.Metrics.IntervalInSeconds)),
-					Scheme:   "http",
+					Scheme:   httpPortName,
 				},
 			},
 		},

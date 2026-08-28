@@ -76,7 +76,10 @@ func (r *TypesenseApiKeyReconciler) Reconcile(ctx context.Context, req ctrl.Requ
 		if err := r.Update(ctx, &key); err != nil {
 			return ctrl.Result{}, err
 		}
-		return ctrl.Result{Requeue: true}, nil
+		// Requeue immediately (not RequeueAfter apiKeyReconcileRequeuePeriod like the rest of this
+		// function) so the finalizer add is picked straight back up instead of waiting out the
+		// steady-state period.
+		return ctrl.Result{Requeue: true}, nil //nolint:staticcheck // SA1019: RequeueAfter has no immediate-requeue equivalent
 	}
 
 	if err := r.initConditions(ctx, &key); err != nil {

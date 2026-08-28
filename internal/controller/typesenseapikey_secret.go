@@ -31,9 +31,9 @@ func (r *TypesenseApiKeyReconciler) ReconcileSecret(ctx context.Context, key *ts
 				Name:      secretObjectKey.Name,
 				Namespace: secretObjectKey.Namespace,
 				Labels: map[string]string{
-					"app.kubernetes.io/managed-by": "typesense-operator",
-					"app.kubernetes.io/name":       "typesense-api-key",
-					"app.kubernetes.io/instance":   key.Name,
+					labelManagedBy: managedByValue,
+					labelName:      "typesense-api-key",
+					labelInstance:  key.Name,
 				},
 			},
 			Type: v1.SecretTypeOpaque,

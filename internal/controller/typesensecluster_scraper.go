@@ -143,7 +143,7 @@ func (r *TypesenseClusterReconciler) createScraper(ctx context.Context, key clie
 											Value: scraperSpec.GetScraperConfig(),
 										},
 										{
-											Name: "TYPESENSE_API_KEY",
+											Name: envTypesenseApiKey,
 											ValueFrom: &corev1.EnvVarSource{
 												SecretKeyRef: &corev1.SecretKeySelector{
 													Key: ClusterAdminApiKeySecretKeyName,
@@ -162,8 +162,8 @@ func (r *TypesenseClusterReconciler) createScraper(ctx context.Context, key clie
 											Value: strconv.Itoa(ts.Spec.ApiPort),
 										},
 										{
-											Name:  "TYPESENSE_PROTOCOL",
-											Value: "http",
+											Name:  envTypesenseProtocol,
+											Value: httpPortName,
 										},
 									},
 									EnvFrom: scraperSpec.GetScraperAuthConfiguration(),
