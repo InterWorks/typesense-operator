@@ -545,7 +545,7 @@ func (r *TypesenseClusterReconciler) PurgeStatefulSetPods(ctx context.Context, s
 		}
 	}
 
-	r.Recorder.Eventf(ts, "Warning", string(ConditionReasonQuorumPurged), toTitle("quorum has been purged"))
+	r.Recorder.Event(ts, "Warning", string(ConditionReasonQuorumPurged), toTitle("quorum has been purged"))
 
 	return nil
 }
@@ -599,7 +599,7 @@ func (r *TypesenseClusterReconciler) RestartUnscheduledPods(ctx context.Context,
 	}
 
 	if removedAny {
-		r.Recorder.Eventf(ts, "Warning", ConditionReasonStatefulSetNotReady, toTitle("removed unscheduled pods"))
+		r.Recorder.Event(ts, "Warning", ConditionReasonStatefulSetNotReady, toTitle("removed unscheduled pods"))
 	}
 
 	return nil
@@ -636,7 +636,7 @@ func (r *TypesenseClusterReconciler) RestartAllUnscheduledPods(ctx context.Conte
 	}
 
 	if removedAny {
-		r.Recorder.Eventf(ts, "Warning", ConditionReasonStatefulSetNotReady, toTitle("removed unscheduled pods"))
+		r.Recorder.Event(ts, "Warning", ConditionReasonStatefulSetNotReady, toTitle("removed unscheduled pods"))
 	}
 
 	return nil

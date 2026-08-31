@@ -244,7 +244,7 @@ func (r *TypesenseClusterReconciler) deleteService(ctx context.Context, svc *v1.
 func (r *TypesenseClusterReconciler) invalidateExternalTrafficPolicy(
 	svcType v1.ServiceType,
 	service *tsv1alpha1.ServiceSpec,
-) (*v1.ServiceExternalTrafficPolicyType, error) {
+) (*v1.ServiceExternalTrafficPolicy, error) {
 	if service == nil || service.ExternalTrafficPolicy == nil {
 		return nil, nil
 	}
