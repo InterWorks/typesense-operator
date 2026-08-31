@@ -188,5 +188,5 @@ type TypesenseClusterList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&TypesenseCluster{}, &TypesenseClusterList{})
+	registerType(&TypesenseCluster{}, &TypesenseClusterList{})
 }

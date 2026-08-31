@@ -242,7 +242,7 @@ func main() {
 	if err = (&controller.TypesenseClusterReconciler{
 		Client:          mgr.GetClient(),
 		Scheme:          mgr.GetScheme(),
-		Recorder:        mgr.GetEventRecorderFor("typesensecluster-controller"),
+		Recorder:        mgr.GetEventRecorderFor("typesensecluster-controller"), //nolint:staticcheck
 		ClientSet:       clientSet,
 		DiscoveryClient: clientSet.DiscoveryClient,
 		Configuration:   mgr.GetConfig(),
@@ -255,7 +255,7 @@ func main() {
 	if err = (&controller.TypesenseApiKeyReconciler{
 		Client:     mgr.GetClient(),
 		Scheme:     mgr.GetScheme(),
-		Recorder:   mgr.GetEventRecorderFor("typesenseapikey-controller"),
+		Recorder:   mgr.GetEventRecorderFor("typesenseapikey-controller"), //nolint:staticcheck
 		HttpClient: &http.Client{Timeout: 10 * time.Second},
 	}).SetupWithManager(mgr); err != nil {
 		setupLog.Error(err, "unable to create controller", "controller", "TypesenseApiKey")
@@ -289,7 +289,10 @@ func main() {
 	}
 
 	v := version.GetBuildInfo()
-	setupLog.Info("starting manager", "version", fmt.Sprintf("%s+%s", v.Version, v.Commit), "buildDate", v.BuildDate, "goVersion", v.GoVersion)
+	setupLog.Info("starting manager",
+		"version", fmt.Sprintf("%s+%s", v.Version, v.Commit),
+		"buildDate", v.BuildDate,
+		"goVersion", v.GoVersion)
 	if err := mgr.Start(ctrl.SetupSignalHandler()); err != nil {
 		setupLog.Error(err, "problem running manager")
 		os.Exit(1)

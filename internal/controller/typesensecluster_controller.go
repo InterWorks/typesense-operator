@@ -142,7 +142,7 @@ func (r *TypesenseClusterReconciler) reportQuorumCondition(ctx context.Context, 
 		if cerr := r.setConditionNotReady(ctx, ts, string(condition), erram); cerr != nil {
 			return cerr
 		}
-		r.Recorder.Eventf(ts, "Warning", string(condition), toTitle(erram.Error()))
+		r.Recorder.Event(ts, "Warning", string(condition), toTitle(erram.Error()))
 
 		return nil
 	}
@@ -156,7 +156,7 @@ func (r *TypesenseClusterReconciler) reportQuorumCondition(ctx context.Context, 
 			return cerr
 		}
 
-		r.Recorder.Eventf(ts, "Warning", string(condition), toTitle(err.Error()))
+		r.Recorder.Event(ts, "Warning", string(condition), toTitle(err.Error()))
 
 		return nil
 	}
@@ -168,7 +168,7 @@ func (r *TypesenseClusterReconciler) reportQuorumCondition(ctx context.Context, 
 	}
 
 	if report {
-		r.Recorder.Eventf(ts, "Normal", string(condition), toTitle("quorum is ready"))
+		r.Recorder.Event(ts, "Normal", string(condition), toTitle("quorum is ready"))
 	}
 
 	return nil
@@ -274,7 +274,7 @@ func (r *TypesenseClusterReconciler) Reconcile(ctx context.Context, req ctrl.Req
 		if cerr != nil {
 			return ctrl.Result{}, cerr
 		}
-		r.Recorder.Eventf(&ts, "Warning", string(cond), toTitle(err.Error()))
+		r.Recorder.Event(&ts, "Warning", string(cond), toTitle(err.Error()))
 	}
 
 	condition, _, err := r.ReconcileQuorum(ctx, &ts, secret, client.ObjectKeyFromObject(sts))

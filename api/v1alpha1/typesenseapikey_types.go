@@ -113,5 +113,5 @@ type TypesenseApiKeyList struct {
 }
 
 func init() {
-	SchemeBuilder.Register(&TypesenseApiKey{}, &TypesenseApiKeyList{})
+	registerType(&TypesenseApiKey{}, &TypesenseApiKeyList{})
 }

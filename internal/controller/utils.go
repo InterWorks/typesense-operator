@@ -301,8 +301,8 @@ func getImageTag(image string) string {
 }
 
 func externalTrafficPolicyEqual(
-	current corev1.ServiceExternalTrafficPolicyType,
-	desired *corev1.ServiceExternalTrafficPolicyType,
+	current corev1.ServiceExternalTrafficPolicy,
+	desired *corev1.ServiceExternalTrafficPolicy,
 ) bool {
 	if desired == nil {
 		return current == ""
