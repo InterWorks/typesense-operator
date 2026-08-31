@@ -26,6 +26,9 @@ jobs:
           git config user.name "$GITHUB_ACTOR"
           git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
 
+      - name: Install Deps
+        uses: jdx/mise-action@v4.3.0
+
       - name: Run chart-releaser
         uses: helm/chart-releaser-action@v1.6.0
         env:
