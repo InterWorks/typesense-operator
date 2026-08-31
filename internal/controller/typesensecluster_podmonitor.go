@@ -9,6 +9,7 @@ import (
 	appsv1 "k8s.io/api/apps/v1"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	metav1 "k8s.io/apimachinery/pkg/apis/meta/v1"
+	"k8s.io/utils/ptr"
 	ctrl "sigs.k8s.io/controller-runtime"
 	"sigs.k8s.io/controller-runtime/pkg/client"
 )
@@ -98,10 +99,10 @@ func (r *TypesenseClusterReconciler) createMetricsExporterPodMonitor(ctx context
 			},
 			PodMetricsEndpoints: []monitoringv1.PodMetricsEndpoint{
 				{
-					Port:     "metrics",
+					Port:     ptr.To("metrics"),
 					Path:     "/metrics",
 					Interval: monitoringv1.Duration(fmt.Sprintf("%ds", ts.Spec.Metrics.IntervalInSeconds)),
-					Scheme:   httpPortName,
+					Scheme:   ptr.To(monitoringv1.Scheme(httpPortName)),
 				},
 			},
 		},
