@@ -1,7 +1,8 @@
 name: Release Helm
 on:
-  tags:
-      - "helm-*.*.*"
+  push:
+    tags:
+        - "helm-*.*.*"
   workflow_dispatch:
     paths-ignore:
       - '**/README.md'

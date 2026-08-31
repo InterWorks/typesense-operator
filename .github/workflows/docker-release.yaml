@@ -1,6 +1,7 @@
 name: Release Docker
 on:
-  tags:
+  push:
+    tags:
       - "docker-*.*.*"
   workflow_dispatch:
     paths-ignore:
