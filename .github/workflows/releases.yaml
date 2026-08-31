@@ -1,35 +1,35 @@
-name: Release Charts
+name: Release
 on:
-#  push:
-#    branches:
-#      - main
-#    tags:
-#      - "v*.*.*"
+  push:
+    branches:
+      - main
+    tags:
+      - "docker-*.*.*"
+      - "helm-*.*.*"
   workflow_dispatch:
     paths-ignore:
       - '**/README.md'
       - "**/.github/workflows/**"
 
 jobs:
-  chart-release:
-    permissions:
-      contents: write
+  release-please:
     runs-on: ubuntu-latest
+    outputs:
+      releases_created:
+      tag_name: 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Generate app token
+        id: app-token
+        uses: actions/create-github-app-token@bcd2ba49218906704ab6c1aa796996da409d3eb1 # v3.2.0
         with:
-          fetch-depth: 0
+          client-id: ${{ secrets.RELEASE_PLEASE_CLIENT_ID }}
+          private-key: ${{ secrets.RELEASE_PLEASE_APP_PRIVATE_KEY }}
+          repositories: ${{ github.event.repository.name }}
 
-      - name: Configure Git
-        run: |
-          git config user.name "$GITHUB_ACTOR"
-          git config user.email "$GITHUB_ACTOR@users.noreply.github.com"
-
-      - name: Install Deps
-        uses: jdx/mise-action@v4.3.0
-
-      - name: Run chart-releaser
-        uses: helm/chart-releaser-action@v1.6.0
-        env:
-          CR_TOKEN: "${{ secrets.GITHUB_TOKEN }}"
+      - name: Run release-please
+        id: release
+        uses: googleapis/release-please-action@45996ed1f6d02564a971a2fa1b5860e934307cf7 # v5.0.0
+        with:
+          token: ${{ steps.app-token.outputs.token }}
+          config-file: release-please-config.json
+          manifest-file: .release-please-manifest.json

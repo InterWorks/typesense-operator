@@ -1,0 +1,19 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "packages": {
+    "charts/typesense-operator": {
+      "component": "helm",
+      "release-type": "helm",
+      "package-name": "typesense-operator",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.md"
+    },
+    "docker/typesense-operator": {
+      "component": "docker",
+      "release-type": "go",
+      "package-name": "typesense-operator",
+      "include-component-in-tag": true,
+      "changelog-path": "CHANGELOG.MD"
+    }
+  }
+}
