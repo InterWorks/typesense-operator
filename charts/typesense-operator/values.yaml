@@ -1,18 +1,18 @@
 controllerManager:
   manager:
     args:
-    - --metrics-bind-address=:8443
-    - --leader-elect
-    - --health-probe-bind-address=:8081
-    - --zap-log-level=debug
+      - '--metrics-bind-address=:8443'
+      - '--leader-elect'
+      - '--health-probe-bind-address=:8081'
+      - '--zap-log-level=debug'
     containerSecurityContext:
       allowPrivilegeEscalation: false
       capabilities:
         drop:
-        - ALL
+          - ALL
     image:
       repository: ghcr.io/interworks/typesense-operator
-      tag: 0.5.0
+      tag: 0.6.0
     imagePullPolicy: IfNotPresent
     resources:
       limits:
@@ -31,13 +31,13 @@ imagePullSecrets: []
 kubernetesClusterDomain: cluster.local
 metricsService:
   ports:
-  - name: https
-    port: 8443
-    protocol: TCP
-    targetPort: 8443
+    - name: https
+      port: 8443
+      protocol: TCP
+      targetPort: 8443
   type: ClusterIP
 serviceAccount:
   annotations: {}
   automount: true
   create: true
-  name: ""
+  name: ''
