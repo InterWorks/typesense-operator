@@ -5,8 +5,8 @@ description: >-
   managing highly-available, self-healing Typesense clusters in Kubernetes
 icon: https://akyriako.github.io/typesense-operator-docs/img/tyko-logo.png
 type: application
-version: 0.6.2
-appVersion: 0.6.2
+version: 0.7.0
+appVersion: 0.7.0
 maintainers:
   - name: Kyriakos Akriotis
     url: https://github.com/akyriako
