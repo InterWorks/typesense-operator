@@ -1,0 +1,35 @@
+{
+  "$schema": "https://raw.githubusercontent.com/googleapis/release-please/main/schemas/config.json",
+  "tag-separator": "-",
+  "packages": {
+    ".": {
+      "release-type": "simple",
+      "component": "typesense-operator",
+      "package-name": "typesense-operator",
+      "include-component-in-tag": true,
+      "include-v-in-tag": false,
+      "changelog-path": "CHANGELOG.md",
+      "extra-files": [
+        {
+          "type": "yaml",
+          "path": "charts/typesense-operator/Chart.yaml",
+          "jsonpath": "$.version"
+        },
+        {
+          "type": "yaml",
+          "path": "charts/typesense-operator/Chart.yaml",
+          "jsonpath": "$.appVersion"
+        },
+        {
+          "type": "yaml",
+          "path": "charts/typesense-operator/values.yaml",
+          "jsonpath": "$.controllerManager.manager.image.tag"
+        },
+        {
+          "type": "generic",
+          "path": "Makefile"
+        }
+      ]
+    }
+  }
+}
