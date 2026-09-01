@@ -2,7 +2,7 @@ name: Release Docker
 on:
   push:
     tags:
-      - "docker-*.*.*"
+      - "typesense-operator-*.*.*"
   workflow_dispatch:
     paths-ignore:
       - '**/README.md'
@@ -15,13 +15,17 @@ jobs:
       packages: write
       contents: read
       attestations: write
-    
+
     steps:
       - name: Checkout
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
-      
+
+      - name: Determine version from tag
+        id: version
+        run: echo "version=${GITHUB_REF_NAME#typesense-operator-}" >> "$GITHUB_OUTPUT"
+
       - name: Log in to GitHub Container Registry
         uses: docker/login-action@dbcb813823bdd20940b903addbd779551569679f # v4
         with:
@@ -34,7 +38,16 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@bb05f3f5519dd87d3ba754cc423b652a5edd6d2c # v4
-      
+
+      - name: Extract Docker metadata
+        id: meta
+        uses: docker/metadata-action@369eb591f429131d6889c46b94e711f089e6ca96 # v5
+        with:
+          images: ghcr.io/interworks/typesense-operator
+          tags: |
+            type=raw,value=${{ steps.version.outputs.version }}
+            type=raw,value=latest
+
       - name: Build and push Docker image
         id: push
         uses: docker/build-push-action@53b7df96c91f9c12dcc8a07bcb9ccacbed38856a # v7
@@ -45,4 +58,6 @@ jobs:
           platforms: linux/amd64,linux/arm64
           tags: ${{ steps.meta.outputs.tags }}
           labels: ${{ steps.meta.outputs.labels }}
-          
+          build-args: |
+            BIN_VERSION=${{ steps.version.outputs.version }}
+            BIN_GIT_COMMIT=${{ github.sha }}

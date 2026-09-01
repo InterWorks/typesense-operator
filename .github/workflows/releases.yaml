@@ -3,9 +3,6 @@ on:
   push:
     branches:
       - main
-    tags:
-      - "docker-*.*.*"
-      - "helm-*.*.*"
   workflow_dispatch:
     paths-ignore:
       - '**/README.md'
@@ -15,8 +12,8 @@ jobs:
   release-please:
     runs-on: ubuntu-latest
     outputs:
-      releases_created:
-      tag_name: 
+      release_created: ${{ steps.release.outputs['.--release_created'] }}
+      tag_name: ${{ steps.release.outputs['.--tag_name'] }}
     steps:
       - name: Generate app token
         id: app-token
