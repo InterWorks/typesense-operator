@@ -52,7 +52,7 @@ OPERATOR_SDK_VERSION ?= v1.39.0
 # Image URL to use all building/pushing image targets
 DOCKER_HUB_NAME ?= ghcr.io/interworks#$(shell docker info | sed '/Username:/!d;s/.* //')
 IMG_NAME ?= typesense-operator
-IMG_TAG ?= 0.6.1 # x-release-please-version
+IMG_TAG ?= 0.6.2 # x-release-please-version
 IMG ?= $(DOCKER_HUB_NAME)/$(IMG_NAME):$(IMG_TAG)
 
 # ENVTEST_K8S_VERSION refers to the version of kubebuilder assets to be downloaded by envtest binary.
