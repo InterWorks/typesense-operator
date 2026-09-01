@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.1](https://github.com/InterWorks/typesense-operator/compare/typesense-operator-0.6.0...typesense-operator-0.6.1) (2026-09-01)
+
+
+### Bug Fixes
+
+* **docker:** bump builder image to go 1.27 ([#32](https://github.com/InterWorks/typesense-operator/issues/32)) ([01b92c2](https://github.com/InterWorks/typesense-operator/commit/01b92c271c68d8a8e73f138b81af6162077729c6))
+
 ## [0.6.0](https://github.com/InterWorks/typesense-operator/compare/typesense-operator-0.5.0...typesense-operator-0.6.0) (2026-09-01)
 
 
