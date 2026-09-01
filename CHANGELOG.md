@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.6.2](https://github.com/InterWorks/typesense-operator/compare/typesense-operator-0.6.1...typesense-operator-0.6.2) (2026-09-01)
+
+
+### Bug Fixes
+
+* **ci:** host helm chart packages directly on gh-pages ([#35](https://github.com/InterWorks/typesense-operator/issues/35)) ([38716cd](https://github.com/InterWorks/typesense-operator/commit/38716cddfc374299a1a72788a2fb761bca30be9b))
+
 ## [0.6.1](https://github.com/InterWorks/typesense-operator/compare/typesense-operator-0.6.0...typesense-operator-0.6.1) (2026-09-01)
 
 
