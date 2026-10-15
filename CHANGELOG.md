@@ -1,5 +1,12 @@
 # Changelog
 
+## [0.7.1](https://github.com/InterWorks/typesense-operator/compare/v0.7.0...v0.7.1) (2026-09-09)
+
+
+### Bug Fixes
+
+* **deps:** update module github.com/onsi/gomega to v1.43.0 ([#13](https://github.com/InterWorks/typesense-operator/issues/13)) ([4578f34](https://github.com/InterWorks/typesense-operator/commit/4578f34a6688b2ca069e46ebc3dc13bfa88d856d))
+
 ## [0.7.0](https://github.com/InterWorks/typesense-operator/compare/v0.6.2...v0.7.0) (2026-09-01)
 
 
